@@ -21,6 +21,7 @@
       </div>
       <div class="col col-shrink">
         <q-btn
+          @click="addNewQweet"
           class="q-mb-lg"
           :disable="!newQweetContent"
           unelevated
@@ -34,8 +35,12 @@
 
     <q-separator class="divider" size="10px" color="grey-2" />
 
-    <q-list>
-      <q-item class="q-py-md">
+    <q-list separator>
+      <q-item
+        v-for="qweet in qweets"
+        :key="qweet.date"
+        class="q-py-md"
+      >
         <q-item-section avatar top>
           <q-avatar size="xl">
               <img src="https://cdn.quasar.dev/img/avatar5.jpg" />
@@ -50,9 +55,7 @@
             </span>
           </q-item-label>
           <q-item-label class="qweet-content text-body1">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. 
-            
-            Ab, rerum? Fuga dolores iste provident vero obcaecati aperiam rem id dolorem dignissimos non. Fugiat accusantium aliquid amet. Laboriosam aut suscipit laborum.
+            {{ qweet.content }}
           </q-item-label>
           <div class="qweet-icon row justify-between q-mt-sm">
             <q-btn
@@ -77,6 +80,7 @@
               size="sm"
             />
             <q-btn
+              @click="deleteQweet(qweet)"
               flat
               round
               color="grey"
@@ -87,7 +91,7 @@
         </q-item-section>
 
         <q-item-section side top>
-          1 min ago
+          {{ qweet.date | relativeDate }}
         </q-item-section>
       </q-item>
     </q-list>
@@ -95,13 +99,45 @@
 </template>
 
 <script>
+import { formatDistance, subDays } from 'date-fns';
+
 export default {
   name: "PageHome",
   data() {
     return {
-      newQweetContent: ""
+      newQweetContent: "",
+      qweets: [
+        {
+          content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab, rerum?.',
+          date: 1624020835319,
+        },
+        {
+          content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab, rerum? Fuga dolores iste provident vero obaperiam rem id dolorem dignissimos non. Fugiat accualiquid amet. Laboriosam aut suscipit laborum.',
+          date: 1624020854044,
+        },
+      ],
     };
-  }
+  },
+  methods: {
+    addNewQweet() {
+      let newQweet = {
+        content: this.newQweetContent,
+        date: Date.now(),
+      }
+
+      this.qweets.unshift(newQweet);
+    },
+    deleteQweet(qweet) {
+      let dateToDelete = qweet.date;
+      let index = this.qweets.findIndex(qweet => qweet.date === dateToDelete);
+      this.qweets.splice(index, 1);
+    },
+  },
+  filters: {
+    relativeDate(value) {
+      return formatDistance(value, new Date());
+    }
+  },
 };
 </script>
 
