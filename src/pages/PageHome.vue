@@ -44,7 +44,7 @@
         >
           <q-item
             v-for="qweet in qweets"
-            :key="qweet.date"
+            :key="qweet.id"
             class="q-py-md qweet"
           >
             <q-item-section avatar top>
@@ -105,23 +105,15 @@
 </template>
 
 <script>
-import { formatDistance, subDays } from 'date-fns';
+import db from 'src/boot/firebase'
+import { formatDistance, subDays } from 'date-fns'
 
 export default {
   name: "PageHome",
   data() {
     return {
       newQweetContent: "",
-      qweets: [
-        {
-          content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab, rerum?.',
-          date: 1624020835319,
-        },
-        {
-          content: 'Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab, rerum? Fuga dolores iste provident vero obaperiam rem id dolorem dignissimos non. Fugiat accualiquid amet. Laboriosam aut suscipit laborum.',
-          date: 1624020854044,
-        },
-      ],
+      qweets: [],
     };
   },
   methods: {
@@ -131,19 +123,46 @@ export default {
         date: Date.now(),
       }
 
-      this.qweets.unshift(newQweet);
+      db.collection('qweets').add(newQweet).then((docRef) => {
+        console.log('Document written with ID: ', docRef.id);
+      }).catch((error) => {
+        console.error('Error adding document: ', error);
+      });
+
       this.newQweetContent = ''
     },
     deleteQweet(qweet) {
-      let dateToDelete = qweet.date;
-      let index = this.qweets.findIndex(qweet => qweet.date === dateToDelete);
-      this.qweets.splice(index, 1);
+      db.collection('qweets').doc(qweet.id).delete().then(() => {
+        console.log('Document successfully deleted!');
+      }).catch((error) => {
+        console.error('Error removing document: ', error);
+      });
     },
   },
   filters: {
     relativeDate(value) {
       return formatDistance(value, new Date());
     }
+  },
+  mounted() {
+    db.collection('qweets').orderBy('date').onSnapshot((snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        let qweetChange = change.doc.data();
+        qweetChange.id = change.doc.id;
+        if (change.type === 'added') {
+          console.log('New qweet: ', qweetChange);
+          this.qweets.unshift(qweetChange);
+        }
+        if (change.type === 'modified') {
+          console.log('Modified qweet: ', qweetChange);
+        }
+        if (change.type === 'removed') {
+          console.log('Removed qweet: ', qweetChange);
+          const index = this.qweets.findIndex(qweet => qweet.id === qweetChange.id);
+          this.qweets.splice(index, 1);
+        }
+      });
+    });
   },
 };
 </script>
